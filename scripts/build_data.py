@@ -158,29 +158,29 @@ def main():
     import csv
     EXPORT_DIR = DATA_DIR / "exports"
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    # Clean tabular export: plain plant data, one row per species, NO image URLs.
+    # scientific_name first as the primary identifier, then taxonomy and the data fields.
     flat = []
     for fam in data:
         for g in fam["genera"]:
             for sp in g["species"]:
                 taxon = sp.get("taxon_name") or sp.get("scientific_name")
                 photos = images.get(taxon, {})
+                endemic = "endemic to the philippines" in sp.get("distribution", "").lower()
                 flat.append({
+                    "scientific_name": sp.get("scientific_name", ""),
                     "family": fam["family"],
                     "genus": g["genus"],
-                    "scientific_name": sp.get("scientific_name", ""),
                     "status": sp.get("status", "").rstrip("."),
                     "category": sp.get("category", ""),
-                    "citation": sp.get("citation", ""),
+                    "endemic": "yes" if endemic else "no",
+                    "conservation_status": sp.get("conservation_status", "").rstrip("."),
+                    "dao_category": sp.get("dao_category", "").rstrip("."),
                     "distribution": sp.get("distribution", ""),
                     "notes": sp.get("notes", ""),
-                    "conservation_status": sp.get("conservation_status", ""),
-                    "dao_category": sp.get("dao_category", ""),
+                    "citation": sp.get("citation", ""),
                     "photo_count": len(photos.get("thumbs", [])),
-                    "photo_urls": " | ".join(photos.get("full", [])),
-                    "gallery_url": sp.get("photo_url", ""),
                 })
-    (EXPORT_DIR / "philippine-plants.json").write_text(
-        json.dumps(flat, ensure_ascii=False), encoding="utf-8")
     cols = list(flat[0].keys())
     with (EXPORT_DIR / "philippine-plants.csv").open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols)
@@ -191,7 +191,7 @@ def main():
     print(f"Species: {n_species}  with photos: {n_with_photos}")
     print(f"index.json: {idx_kb:.0f} KB")
     print(f"Family files: {len(data)} in {FAM_DIR}")
-    print(f"Exports: {EXPORT_DIR}/philippine-plants.{{json,csv}}")
+    print(f"Export: {EXPORT_DIR}/philippine-plants.csv  ({len(flat)} rows, {len(cols)} cols)")
 
 
 if __name__ == "__main__":

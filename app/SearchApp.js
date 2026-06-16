@@ -211,16 +211,13 @@ export default function SearchApp() {
             </div>
 
             <div className="exportbar">
-              <span className="exportlabel">Export:</span>
+              <span className="exportlabel">Export to CSV (opens as a table in Excel / Sheets):</span>
+              <a className="exbtn primary" href="/data/exports/philippine-plants.csv" download>
+                ⬇ All {t ? t.species.toLocaleString() : ""} species
+              </a>
               <button className="exbtn" onClick={() => exportFiltered(filtered)}>
-                ⬇ These {filtered.length.toLocaleString()} results (CSV)
+                ⬇ Current {filtered.length.toLocaleString()} results
               </button>
-              <a className="exbtn" href="/data/exports/philippine-plants.csv" download>
-                ⬇ All species (CSV)
-              </a>
-              <a className="exbtn" href="/data/exports/philippine-plants.json" download>
-                ⬇ All species (JSON)
-              </a>
             </div>
 
             <div className="list">
