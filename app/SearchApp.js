@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 
 const PAGE_SIZE = 100;
 
+// Cornell serves photos over HTTP only; route them through our HTTPS proxy to avoid
+// mixed-content blocking.
+const imgProxy = (u) => (u ? `/api/img?u=${encodeURIComponent(u)}` : "");
+
 export default function SearchApp() {
   const [index, setIndex] = useState(null);
   const [meta, setMeta] = useState(null);
@@ -83,6 +87,25 @@ export default function SearchApp() {
     },
     [meta]
   );
+
+  const exportFiltered = useCallback((rows) => {
+    const headers = ["scientific_name", "family", "genus", "status", "conservation", "endemic", "has_photos", "distribution"];
+    const esc = (v) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const lines = [headers.join(",")];
+    for (const r of rows) {
+      lines.push([r.s, r.f, r.g, r.st, r.c, r.e ? "yes" : "no", r.p ? "yes" : "no", r.d].map(esc).join(","));
+    }
+    const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "philippine-plants-filtered.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
 
   if (error)
     return (
@@ -187,20 +210,50 @@ export default function SearchApp() {
               </span>
             </div>
 
+            <div className="exportbar">
+              <span className="exportlabel">Export:</span>
+              <button className="exbtn" onClick={() => exportFiltered(filtered)}>
+                ⬇ These {filtered.length.toLocaleString()} results (CSV)
+              </button>
+              <a className="exbtn" href="/data/exports/philippine-plants.csv" download>
+                ⬇ All species (CSV)
+              </a>
+              <a className="exbtn" href="/data/exports/philippine-plants.json" download>
+                ⬇ All species (JSON)
+              </a>
+            </div>
+
             <div className="list">
               {filtered.slice(0, limit).map((r) => (
                 <div key={r.u} className="row" onClick={() => openDetail(r)}>
-                  <span className="sci">{r.s}</span>
-                  <span className="meta">
-                    {r.f} · {r.g}
-                  </span>
-                  <span className="spacer" />
-                  {r.e ? <span className="badge endemic">Endemic</span> : null}
-                  {r.c ? <span className="badge cons">{r.c}</span> : null}
-                  {r.st && r.st !== "Native" ? (
-                    <span className="badge">{r.st}</span>
-                  ) : null}
-                  {r.p ? <span className="badge photo">Photos</span> : null}
+                  {r.th ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      className="rowthumb"
+                      src={imgProxy(r.th)}
+                      alt=""
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="rowthumb placeholder">🌿</span>
+                  )}
+                  <div className="rowmain">
+                    <div className="rowtop">
+                      <span className="sci">{r.s}</span>
+                      <span className="meta">
+                        {r.f} · {r.g}
+                      </span>
+                    </div>
+                    {r.d ? <div className="rowdist">{r.d}</div> : null}
+                    <div className="rowbadges">
+                      {r.e ? <span className="badge endemic">Endemic</span> : null}
+                      {r.c ? <span className="badge cons">{r.c}</span> : null}
+                      {r.st && r.st !== "Native" ? (
+                        <span className="badge">{r.st}</span>
+                      ) : null}
+                      {r.p ? <span className="badge photo">Photos</span> : null}
+                    </div>
+                  </div>
                 </div>
               ))}
               {filtered.length === 0 && (
@@ -295,16 +348,15 @@ function DetailPanel({ data, loading, onClose }) {
                 {sp.thumbs.map((thumb, i) => (
                   <a
                     key={i}
-                    href={(sp.full && sp.full[i]) || thumb}
+                    href={imgProxy((sp.full && sp.full[i]) || thumb)}
                     target="_blank"
                     rel="noreferrer"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={thumb}
+                      src={imgProxy(thumb)}
                       alt={sp.scientific_name}
                       loading="lazy"
-                      referrerPolicy="no-referrer"
                     />
                   </a>
                 ))}

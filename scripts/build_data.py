@@ -92,6 +92,10 @@ def main():
                 if cons:
                     conservations.add(cons)
 
+                # Short distribution snippet for the list view.
+                dist = sp.get("distribution", "")
+                dist_snip = dist[:95].rsplit(" ", 1)[0] + ("…" if len(dist) > 95 else "")
+
                 # Compact index record (short keys to keep the file small).
                 index.append({
                     "u": uid,
@@ -102,6 +106,8 @@ def main():
                     "c": cons,
                     "e": 1 if endemic else 0,
                     "p": 1 if thumbs else 0,
+                    "d": dist_snip,
+                    "th": thumbs[0] if thumbs else "",
                 })
 
                 # Full detail record (lives in the family file).
@@ -148,10 +154,44 @@ def main():
     (DATA_DIR / "meta.json").write_text(
         json.dumps(meta, ensure_ascii=False), encoding="utf-8")
 
+    # --- Full downloadable exports (flat, one row per species) ---
+    import csv
+    EXPORT_DIR = DATA_DIR / "exports"
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    flat = []
+    for fam in data:
+        for g in fam["genera"]:
+            for sp in g["species"]:
+                taxon = sp.get("taxon_name") or sp.get("scientific_name")
+                photos = images.get(taxon, {})
+                flat.append({
+                    "family": fam["family"],
+                    "genus": g["genus"],
+                    "scientific_name": sp.get("scientific_name", ""),
+                    "status": sp.get("status", "").rstrip("."),
+                    "category": sp.get("category", ""),
+                    "citation": sp.get("citation", ""),
+                    "distribution": sp.get("distribution", ""),
+                    "notes": sp.get("notes", ""),
+                    "conservation_status": sp.get("conservation_status", ""),
+                    "dao_category": sp.get("dao_category", ""),
+                    "photo_count": len(photos.get("thumbs", [])),
+                    "photo_urls": " | ".join(photos.get("full", [])),
+                    "gallery_url": sp.get("photo_url", ""),
+                })
+    (EXPORT_DIR / "philippine-plants.json").write_text(
+        json.dumps(flat, ensure_ascii=False), encoding="utf-8")
+    cols = list(flat[0].keys())
+    with (EXPORT_DIR / "philippine-plants.csv").open("w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        w.writerows(flat)
+
     idx_kb = (DATA_DIR / "index.json").stat().st_size / 1024
     print(f"Species: {n_species}  with photos: {n_with_photos}")
     print(f"index.json: {idx_kb:.0f} KB")
     print(f"Family files: {len(data)} in {FAM_DIR}")
+    print(f"Exports: {EXPORT_DIR}/philippine-plants.{{json,csv}}")
 
 
 if __name__ == "__main__":

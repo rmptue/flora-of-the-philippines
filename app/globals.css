@@ -74,22 +74,48 @@ a { color: var(--green-700); }
 .toggles label { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; cursor: pointer; }
 .resultcount { margin-left: auto; font-size: 13px; color: var(--muted); }
 
+.exportbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 10px 2px 0; padding-top: 10px; border-top: 1px dashed var(--line);
+}
+.exportlabel { font-size: 13px; color: var(--muted); font-weight: 600; }
+.exbtn {
+  font-size: 12.5px; text-decoration: none; cursor: pointer;
+  background: var(--green-50); color: var(--green-800);
+  border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px;
+  font-family: inherit;
+}
+.exbtn:hover { background: var(--green-100); border-color: var(--green-600); }
+
 .list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
 
 .row {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   cursor: pointer;
   display: flex;
   gap: 12px;
-  align-items: baseline;
+  align-items: center;
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .row:hover { border-color: var(--green-600); box-shadow: 0 1px 6px rgba(44,110,66,0.12); }
+.rowthumb {
+  width: 56px; height: 56px; flex: 0 0 56px; border-radius: 8px; object-fit: cover;
+  background: var(--green-50); border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.rowthumb.placeholder { color: var(--green-600); opacity: 0.55; }
+.rowmain { min-width: 0; flex: 1; }
+.rowtop { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .row .sci { font-style: italic; font-weight: 600; color: var(--green-900); }
 .row .meta { font-size: 12.5px; color: var(--muted); }
+.rowdist {
+  font-size: 12.5px; color: var(--muted); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rowbadges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .badge {
   font-size: 11px; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
   border: 1px solid var(--line); background: var(--green-50); color: var(--green-800);
